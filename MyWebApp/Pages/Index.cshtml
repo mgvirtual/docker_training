@@ -1,0 +1,13 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Homework 2 - Home page";
+}
+
+<div class="text-center">
+    <h1>Hello Docker Homework 2!</h1>
+    <p>Server Date/Time: @DateTime.Now</p>
+    <p>Server Timezone: @TimeZoneInfo.Local.DisplayName</p>
+    <p>Server Hostname: @System.Net.Dns.GetHostName()</p>
+    <p>IP Address is: @System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName())[1]</p>
+</div>
