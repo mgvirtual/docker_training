@@ -1,0 +1,98 @@
+version: "3"
+services:
+  sonarqube:
+    image: sonarqube
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - SONARQUBE_JDBC_USERNAME=sonarqube
+      - SONARQUBE_JDBC_PASSWORD=sonarpass
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonarqube
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+    networks:
+      - dbnetwork
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+
+  db:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=sonarqube
+      - POSTGRES_PASSWORD=sonarpass
+      - POSTGRES_DB=sonarqube
+    networks:
+      - dbnetwork
+    volumes:
+      - sonarqube_db:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk11
+    restart: on-failure
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks:
+      - dbnetwork
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+  nexus3:
+    image: sonatype/nexus3
+    restart: always
+    ports:
+      - "8081:8081"
+    networks:
+      - other_network
+    volumes:
+      - nexus_data:/nexus-data
+
+  portainer:
+    image: portainer/portainer-ce
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "9001:9000"
+    networks:
+      - other_network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./portainer-data:/data
+
+  mywebapp:
+    image: jmgutierrez22/docker_training:marcelo.gutierrez
+    build:
+      context: MyWebApp/.
+    ports:
+      - "5100:5217"
+    networks:
+      - other_network
+
+networks:
+  dbnetwork:
+  other_network:
+
+volumes:
+  postgresql_data:
+  sonarqube_bundled-plugins:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_db:
+  sonarqube_extensions:
+  jenkins_home:
+  nexus_data:
+    driver: local
+    driver_opts:
+        type: 'none'
+        o: 'bind'
+        device: '${PWD}/nexus-data'
+  portainer_data:
